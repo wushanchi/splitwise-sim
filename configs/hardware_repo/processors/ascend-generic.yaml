@@ -1,0 +1,4 @@
+_target_: processor.NPU
+name: ascend-generic
+# Synthetic example capacity (64 GiB), not any specific Ascend product's spec.
+memory_size: 68719476736

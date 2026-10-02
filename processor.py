@@ -12,6 +12,7 @@ class ProcessorType(IntEnum):
     DEFAULT = 0
     CPU = 1
     GPU = 2
+    NPU = 3
 
 
 @dataclass(kw_only=True)
@@ -117,6 +118,12 @@ class CPU(Processor):
 @dataclass(kw_only=True)
 class GPU(Processor):
     processor_type: ProcessorType = ProcessorType.GPU
+
+
+@dataclass(kw_only=True)
+class NPU(Processor):
+    """A simulated NPU resource; no accelerator runtime is loaded."""
+    processor_type: ProcessorType = ProcessorType.NPU
 
 
 if __name__ == "__main__":

@@ -1,0 +1,8 @@
+- application_id: 0
+  model_architecture: synthetic-llm
+  model_size: synthetic-llm-fp16
+  allocator: noop
+  scheduler: token_jsq
+  overheads: {}
+  debug: ${debug}
+  _target_: application.Application

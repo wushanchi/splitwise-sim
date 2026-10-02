@@ -2,6 +2,25 @@
 
 SplitwiseSim is a discrete event simulator that helps evaluate model serving in LLM inference clusters. It was built to evaluate [Splitwise](#reference), a generative LLM inference serving technique that splits LLM inference phases across different machines. SplitwiseSim can easily be extended to other applications and use cases.
 
+## Generic Ascend NPU simulator adapter
+
+This fork adds an opt-in NPU resource type, provenance-checked iteration profiles,
+and calibrated KV transfer links. The examples run on a CPU with **synthetic**
+data; they do not represent measured Ascend hardware performance or power.
+Both aggregation and P/D examples use two one-device servers. Existing GPU
+configurations and performance data remain available.
+
+```bash
+python -m pip install -r requirements-sim.txt
+python scripts/run_ascend_examples.py
+python -m unittest discover -s tests -v
+```
+
+See the [Chinese Ascend adaptation guide](docs/ASCEND_NPU_ZH.md) for the profile
+CSV/metadata contract, measurement protocol, deployment options and limitations.
+The direct `config_ascend` entry defaults to exact lookup and rejects synthetic
+profiles unless explicitly enabled; the demo runner makes both choices explicit.
+
 ## Setup
 
 You can set up SplitwiseSim by installing its Python dependencies. We recommend starting with a fresh Python environment.

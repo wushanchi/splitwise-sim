@@ -1,0 +1,7 @@
+# Two identical one-device servers: equal device count for aggregation and P/D.
+# Power is disabled; this zero is not a measured budget.
+power_budget: 0
+servers:
+  - sku: ascend-example-server
+    count: 2
+interconnects: []

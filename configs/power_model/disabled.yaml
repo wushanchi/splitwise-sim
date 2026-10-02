@@ -1,0 +1,2 @@
+# No measured NPU/server power model is provided by this generic adapter.
+_target_: power_model.DisabledPowerModel

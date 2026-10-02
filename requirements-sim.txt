@@ -1,0 +1,7 @@
+# CPU-only simulator runtime, tested with Python 3.12; no Ray or device stack.
+hydra-core==1.3.2
+omegaconf==2.3.1
+numpy==1.26.4
+pandas==2.2.3
+scipy==1.13.1
+networkx==3.1

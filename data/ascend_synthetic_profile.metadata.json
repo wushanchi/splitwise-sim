@@ -1,0 +1,22 @@
+{
+  "schema_version": 1,
+  "provenance": "synthetic",
+  "description": "Arithmetic examples for CPU-only simulator validation. ascend-generic is a placeholder, not a characterized Ascend product. No CANN, torch_npu, HCCL or NPU measurements are represented.",
+  "latency_unit": "ms",
+  "source": "Hand-constructed deterministic arithmetic examples in this repository.",
+  "shape_semantics": {
+    "batch_size": "Number of tasks in one simulator iteration.",
+    "batch_tokens": "Sum of full prompt lengths plus one token per decode task.",
+    "context_tokens": "Sum of request.processed_tokens for decode tasks only; zero for pure prefill."
+  },
+  "synthetic_formulas_ms": {
+    "prefill": "1 + 0.05 * batch_tokens",
+    "decode": "0.5 + 0.02 * batch_size + 0.001 * context_tokens",
+    "mixed": "1.2 + 0.05 * batch_tokens + 0.001 * context_tokens"
+  },
+  "limitations": [
+    "For plumbing and scheduling examples only; not evidence of real accelerator throughput or latency.",
+    "Sparse sample shapes require explicit nearest lookup for the example traces.",
+    "No pipeline parallelism, kernel, memory bandwidth or collective simulation."
+  ]
+}

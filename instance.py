@@ -9,7 +9,8 @@ import utils
 
 from metrics import InstanceMetrics
 from node import NodeState
-from performance_model import get_duration, get_iteration_duration
+from performance_model import (get_duration, get_iteration_duration,
+                               supports_iteration_coalescing)
 from simulator import clock, schedule_event, cancel_event, reschedule_event
 from task import PromptTask, TokenTask
 
@@ -417,6 +418,8 @@ class ORCAInstance(Instance):
             return 0
         if len(self.prompt_tasks_in_batch) > 0:
             return 1
+        if not supports_iteration_coalescing():
+            return 1
         # assumes all tasks are token tasks
         return min(task.token_size - task.generated_tokens for task in self.batch)
 
@@ -525,6 +528,11 @@ class ORCAInstance(Instance):
         Assumes that all tasks in the batch are token tasks.
         """
         if self.pause_next_iteration or len(self.prompt_tasks_in_batch) > 0:
+            return
+        # A single iteration is already the earliest boundary. In particular,
+        # an arrival at its completion timestamp must not extend it to two
+        # iterations and reuse a stale context-dependent latency.
+        if self.num_contiguous_iterations <= 1:
             return
         self.pause_next_iteration = True
 

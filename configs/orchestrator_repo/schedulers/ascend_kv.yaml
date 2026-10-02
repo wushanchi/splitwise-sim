@@ -1,0 +1,11 @@
+_target_: scheduler.CalibratedKVScheduler
+overheads: {}
+executor_overheads:
+  submit_task: 0
+  submit_flow: 0
+  finish_request: 0
+prompt_processors: [ascend-generic]
+token_processors: [ascend-generic]
+# Arithmetic demo only. Replace both from measurements for the target topology.
+transfer_bandwidth_gib_s: 10
+transfer_latency_ms: 0.1

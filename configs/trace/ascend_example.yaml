@@ -1,0 +1,3 @@
+dir: examples
+filename: ascend_trace
+path: ${trace.dir}/${trace.filename}.csv

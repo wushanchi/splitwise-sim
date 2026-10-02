@@ -100,7 +100,6 @@ class TraceSimulator(Simulator):
         self.router = router
         self.arbiter = arbiter
         logging.info("TraceSimulator initialized")
-        self.load_trace()
 
     def load_trace(self):
         """
@@ -115,6 +114,10 @@ class TraceSimulator(Simulator):
         self.schedule(0, self.cluster.run)
         self.schedule(0, self.router.run)
         self.schedule(0, self.arbiter.run)
+
+        # run.py has now installed the start state. Zero-time arrivals must not
+        # run synchronously from __init__ before the instances exist.
+        self.load_trace()
 
         # run simulation
         super().run()

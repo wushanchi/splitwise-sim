@@ -1,0 +1,6 @@
+_target_: profiled_performance_model.ProfiledPerformanceModel
+profile_path: data/ascend_synthetic_profile.csv
+metadata_path: data/ascend_synthetic_profile.metadata.json
+# Production-safe defaults. The demo runner must explicitly opt in to both.
+allow_synthetic: False
+lookup_mode: exact

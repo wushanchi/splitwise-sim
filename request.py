@@ -302,8 +302,9 @@ class GenerativeLLMRequest(Request):
             num_tokens = self.generated_tokens
         if model is None:
             model = self.root_node.instance.model
-        return 2 * self.batch_size * num_tokens * model.architecture.hidden_size \
-                * model.architecture.num_layers * model.size.dtype_size
+        bytes_per_token = model.architecture.get_kv_cache_bytes_per_token(
+            model.size.dtype_size)
+        return self.batch_size * num_tokens * bytes_per_token
 
     def get_nth_token_overhead(self):
         """

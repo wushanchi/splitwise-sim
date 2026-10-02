@@ -69,6 +69,10 @@ def get_statistics(values, statistics=None):
                       "p999",
                       "geomean"]
     results = {}
+    # An empty completion set has no latency distribution. Preserve the CSV
+    # schema using missing values, rather than crashing or inventing zero delay.
+    if len(values) == 0:
+        return {statistic: float("nan") for statistic in statistics}
     if "mean" in statistics:
         results["mean"] = np.mean(values)
     if "std" in statistics:

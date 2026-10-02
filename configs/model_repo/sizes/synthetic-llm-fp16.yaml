@@ -1,0 +1,5 @@
+_target_: model.ModelSize
+# Deliberately independent synthetic capacity assumption: 16 GiB of weights.
+# This is not a parameter-count estimate for the architecture above.
+weights: 17179869184
+dtype_size: 2

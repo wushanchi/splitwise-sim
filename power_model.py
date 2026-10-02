@@ -59,6 +59,22 @@ class ConstantPowerModel(PowerModel):
             raise NotImplementedError
 
 
+class DisabledPowerModel(PowerModel):
+    """Explicitly disable power accounting for uncalibrated platforms.
+
+    Returned zeros are bookkeeping placeholders, never power measurements.
+    """
+
+    def get_processors_power(self, task, processors, *args, **kwargs):
+        return [0.0] * len(processors)
+
+    def get_server_idle_power(self, server):
+        return 0.0
+
+    def get_metadata(self):
+        return {"enabled": False, "reason": "Power and energy are not calibrated or simulated"}
+
+
 class DatabasePowerModel(PowerModel):
     """
     PowerModel based on a CSV database of characterization runs.

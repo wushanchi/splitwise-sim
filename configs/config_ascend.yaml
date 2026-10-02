@@ -1,0 +1,32 @@
+# Generic Ascend simulator entry point. No device access or hardware measurements.
+# The bundled profile is synthetic and is rejected unless explicitly allowed.
+defaults:
+  - cluster: ascend_two_servers
+  - router: noop
+  - arbiter: noop
+  - hardware_repo: default
+  - model_repo: default
+  - orchestrator_repo: default
+  - performance_model: ascend_profiled
+  - power_model: disabled
+  - applications: ascend_synthetic
+  - trace: ascend_example
+  - start_state: ascend_aggregate
+  - override hydra/launcher: basic
+  - _self_
+
+end_time: 60
+debug: True
+seed: 0
+
+choices: ${hydra:runtime.choices}
+output_dir: results/ascend/${start_state.state_type}/${seed}/${trace.filename}/${applications.0.scheduler}
+
+hydra:
+  run:
+    dir: ${output_dir}
+  sweep:
+    dir: results/ascend/sweeps
+    subdir: ${hydra.job.num}
+  job:
+    chdir: True

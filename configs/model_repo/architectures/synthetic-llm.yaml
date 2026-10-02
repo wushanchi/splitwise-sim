@@ -1,0 +1,8 @@
+# An artificial GQA shape for simulator plumbing, not a released model.
+_target_: model.LLMArchitecture
+name: synthetic-llm
+num_layers: 8
+hidden_size: 512
+num_heads: 8
+num_kv_heads: 2
+head_dim: 64

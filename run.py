@@ -1,4 +1,5 @@
 import logging
+import json
 import os
 import random
 import sys
@@ -42,7 +43,45 @@ def run_simulation(cfg):
                      applications=applications,
                      router=router,
                      arbiter=arbiter)
-    sim.run()
+    simulation_succeeded = False
+    try:
+        sim.run()
+        simulation_succeeded = True
+    finally:
+        save_simulation_metadata(cfg, sim, trace, router, applications,
+                                 performance_model, power_model,
+                                 simulation_succeeded)
+
+
+def save_simulation_metadata(cfg, sim, trace, router, applications,
+                             performance_model, power_model, succeeded):
+    """Keep profile provenance and completion counts even when execution fails."""
+    if hasattr(performance_model, "get_metadata"):
+        completed = len(router.completed_queue)
+        metadata = {
+            "execution": "cpu_discrete_event_simulation",
+            "run_status": "completed" if succeeded else "failed",
+            "num_input_requests": trace.num_requests,
+            "num_completed_requests": completed,
+            "num_uncompleted_requests": trace.num_requests - completed,
+            "all_requests_completed": completed == trace.num_requests,
+            "simulated_time_seconds": float(sim.time),
+            "end_time_seconds": cfg.end_time,
+            "performance_model": performance_model.get_metadata(),
+            "power_model": (power_model.get_metadata()
+                            if hasattr(power_model, "get_metadata")
+                            else {"class": type(power_model).__name__,
+                                  "dynamic_energy_validated": False}),
+            "schedulers": {
+                str(app_id): (app.scheduler.get_metadata()
+                              if hasattr(app.scheduler, "get_metadata")
+                              else {"class": type(app.scheduler).__name__})
+                for app_id, app in applications.items()
+            },
+        }
+        with open("simulation_metadata.json", "w", encoding="utf-8") as stream:
+            json.dump(metadata, stream, indent=2, ensure_ascii=False, allow_nan=False)
+            stream.write("\n")
 
 
 @hydra.main(config_path="configs", config_name="config", version_base=None)

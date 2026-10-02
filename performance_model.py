@@ -268,3 +268,8 @@ def get_iteration_duration(*args, **kwargs):
     Returns the execution time of a contiguous iteration.
     """
     return performance_model.get_iteration_duration(*args, **kwargs)
+
+
+def supports_iteration_coalescing():
+    """Only combine Decode steps when the time model is context independent."""
+    return getattr(performance_model, "supports_iteration_coalescing", True)

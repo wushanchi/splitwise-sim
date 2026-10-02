@@ -10,6 +10,7 @@ import pandas as pd
 import utils
 
 from executor import Executor, ExecutorType
+from calibrated_interconnect import CalibratedLink
 from interconnect import DummyLink
 from performance_model import get_duration
 from simulator import clock, schedule_event, cancel_event, reschedule_event
@@ -259,6 +260,88 @@ class KVScheduler(Scheduler):
         # NOTE: simulate delay by adding a link of configurable bandwidth
         kv_transfer_flow.link = DummyLink(name="DummyLink",
                                           bandwidth=bandwidth)
+
+
+class CalibratedKVScheduler(KVScheduler):
+    """Tag-separated P/D placement with a serial link per directed pair.
+
+    Routing uses the pending-token proxy (P for Prefill, one per unfinished
+    Decode task). Capacity admission remains in Instance/CalibratedLink: this
+    policy neither reroutes memory-blocked requests nor models shared NICs.
+    The processor-list arguments remain compatible with KVScheduler configs,
+    but explicit prompt/token instance tags are required for this policy.
+    """
+
+    def __init__(self, application, router, overheads, executor_overheads,
+                 prompt_processors, token_processors, transfer_bandwidth_gib_s,
+                 transfer_latency_ms, debug=False):
+        bandwidth, latency = CalibratedLink.validate_parameters(
+            transfer_bandwidth_gib_s, transfer_latency_ms)
+        super().__init__(application, router, overheads, executor_overheads,
+                         prompt_processors, token_processors, debug)
+        self.transfer_bandwidth_gib_s = bandwidth
+        self.transfer_latency_ms = latency
+        self.links = {}
+
+    def get_metadata(self):
+        return {
+            "scheduler": type(self).__name__,
+            "transfer_model": "CalibratedLink",
+            "transfer_bandwidth_gib_s": self.transfer_bandwidth_gib_s,
+            "transfer_latency_ms": self.transfer_latency_ms,
+            "contention_scope": "directed_instance_pair",
+            "max_flows_per_link": 1,
+            "overlap": False,
+            "link_count": len(self.links),
+            "memory_retry_delay_seconds": 1.0,
+            "shared_nic_or_switch_contention": False,
+        }
+
+    def add_instance(self, instance):
+        if instance.tag not in ("prompt", "token"):
+            raise ValueError("CalibratedKVScheduler requires prompt/token instance tags")
+        if any(existing is instance for existing in self.instances):
+            raise ValueError("Instance is already registered with this scheduler")
+        super().add_instance(instance)
+
+    def schedule(self, request, *args, **kwargs):
+        if not self.prompt_instances or not self.token_instances:
+            raise ValueError("CalibratedKVScheduler requires both prompt and token instances")
+        prompt_task = request.root_node
+        token_task = next(request.successors(prompt_task))
+        if prompt_task.task_type != TaskType.PROMPT or token_task.task_type != TaskType.TOKEN:
+            raise ValueError("CalibratedKVScheduler expects a Prompt -> Token request")
+        prompt_instance = min(self.prompt_instances,
+                              key=lambda instance: instance.sched_pending_tokens)
+        token_instance = min(self.token_instances,
+                             key=lambda instance: instance.sched_pending_tokens)
+        pair = (prompt_instance, token_instance)
+        if pair not in self.links:
+            self.links[pair] = CalibratedLink(
+                name=f"CalibratedLink_{prompt_instance.instance_id}_{token_instance.instance_id}",
+                src=prompt_instance, dest=token_instance,
+                transfer_bandwidth_gib_s=self.transfer_bandwidth_gib_s,
+                transfer_latency_ms=self.transfer_latency_ms)
+        flow = request.create_flow(
+            FlowType.KVCacheTransfer,
+            size=request.estimate_kv_cache_size(
+                num_tokens=prompt_task.prompt_size, model=prompt_instance.model),
+            src=prompt_instance, dest=token_instance)
+        flow.notify = True
+        flow.link = self.links[pair]
+        request.flow_node = flow
+        request.dag.remove_edge(prompt_task, token_task)
+        request.dag.add_edge(prompt_task, flow)
+        request.dag.add_edge(flow, token_task)
+        prompt_task.instance = prompt_instance
+        token_task.instance = token_instance
+
+        # Match PromptTask/TokenTask.complete and Instance.free_memory updates.
+        prompt_instance.sched_pending_tokens += prompt_task.prompt_size
+        token_instance.sched_pending_tokens += 1
+        prompt_instance.sched_memory += prompt_task.max_memory(prompt_instance)
+        token_instance.sched_memory += (prompt_task.max_memory(token_instance) +
+                                        token_task.max_memory(token_instance))
 
 
 class RandomScheduler(Scheduler):

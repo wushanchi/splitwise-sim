@@ -1,0 +1,9 @@
+request_id,request_type,application_id,arrival_timestamp,batch_size,prompt_size,token_size
+0,2,0,0.00,1,16,8
+1,2,0,0.01,1,32,8
+2,2,0,0.02,1,64,8
+3,2,0,0.03,1,128,8
+4,2,0,0.04,1,16,8
+5,2,0,0.05,1,32,8
+6,2,0,0.06,1,64,8
+7,2,0,0.07,1,128,8
